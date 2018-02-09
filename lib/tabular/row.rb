@@ -157,11 +157,7 @@ module Tabular
       when :boolean
         [ 1, "1", true, "true" ].include?(value)
       when :date
-        if date?(value)
-          value
-        else
-          parse_date value, column.key, index
-        end
+        date?(value) ? value : value.to_s
       else
         value
       end
