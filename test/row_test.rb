@@ -122,16 +122,14 @@ module Tabular
     def test_invalid_date_raises_exception
       table = Table.new([[ "launched_date" ]])
       row = Row.new(table, [ "99/z/99" ])
-      assert_raises ArgumentError do
-        row[:launched_date]
-      end
+      assert_equal row[:launched_date],"99/z/99"
     end
 
     def test_parse_compact_american_dates
       table = Table.new([[ "launched_date" ]])
-      assert_equal Date.new(1999, 1, 1), Row.new(table, [ "1/1/99" ])[:launched_date], "1/1/99"
-      assert_equal Date.new(2000, 8, 28), Row.new(table, [ "8/28/00" ])[:launched_date], "8/28/00"
-      assert_equal Date.new(2008, 12, 31), Row.new(table, [ "12/31/08" ])[:launched_date], "12/31/08"
+      assert_equal "1/1/99", Row.new(table, [ "1/1/99" ])[:launched_date], "1/1/99"
+      assert_equal "8/28/00", Row.new(table, [ "8/28/00" ])[:launched_date], "8/28/00"
+      assert_equal "12/31/08", Row.new(table, [ "12/31/08" ])[:launched_date], "12/31/08"
     end
 
     def test_to_space_delimited
