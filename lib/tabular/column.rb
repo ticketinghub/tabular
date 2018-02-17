@@ -1,6 +1,6 @@
 module Tabular
   class Column
-    attr_reader :key, :column_type
+    attr_reader :key, :column_type, :original_key
 
     # +table+ -- parent Table
     # +column+ -- parent Columns
@@ -8,6 +8,7 @@ module Tabular
     def initialize(table, columns, key = nil)
       @columns = columns
       @table = table
+      @original_key = key
       @key = self.columns.column_mapper.map(key)
 
       if @key && @key.to_s["date"]
