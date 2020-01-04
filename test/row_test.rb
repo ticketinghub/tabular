@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 require "helper"
 
 module Tabular
   class RowTest < Minitest::Test
     def test_new
       row = Row.new(Table.new)
-      assert_equal nil, row[:city], "[]"
+      assert_nil row[:city], "[]"
 
       assert_equal "", row.join, "join"
       assert_equal({}, row.to_hash, "to_hash")
@@ -12,40 +14,40 @@ module Tabular
       assert_equal "", row.to_s, "to_s"
 
       # Test each
-      row.each { |c| c.nil? }
+      row.each(&:nil?)
     end
 
     def test_new_from_hash
-      row = Row.new(Table.new, { :place => "1" })
-      assert_equal nil, row[:city], "[]"
+      row = Row.new(Table.new, place: "1")
+      assert_nil row[:city], "[]"
 
       assert_equal "1", row.join, "join"
-      assert_equal({ :place => "1" }, row.to_hash, "to_hash")
+      assert_equal({ place: "1" }, row.to_hash, "to_hash")
       assert_equal "{:place=>\"1\"}", row.inspect, "inspect"
       assert_equal "1", row.to_s, "to_s"
 
       # Test each
-      row.each { |c| c.nil? }
+      row.each(&:nil?)
     end
 
     def test_new_from_hash_with_string_keys
-      row = Row.new(Table.new, { "place" => "1" })
-      assert_equal nil, row[:city], "[]"
+      row = Row.new(Table.new, "place" => "1")
+      assert_nil row[:city], "[]"
 
       assert_equal "1", row.join, "join"
-      assert_equal({ :place => "1" }, row.to_hash, "to_hash")
+      assert_equal({ place: "1" }, row.to_hash, "to_hash")
       assert_equal "{:place=>\"1\"}", row.inspect, "inspect"
       assert_equal "1", row.to_s, "to_s"
 
       # Test each
-      row.each { |c| c.nil? }
+      row.each(&:nil?)
 
       assert_equal({ "place" => "1" }, row.source, "source")
     end
 
     def test_set
-      table = Table.new([[ "planet", "star" ]])
-      row = Row.new(table, [ "Mars", "Sun" ])
+      table = Table.new([%w[planet star]])
+      row = Row.new(table, %w[Mars Sun])
 
       assert_equal "Sun", row[:star], "row[:star]"
 
@@ -57,66 +59,66 @@ module Tabular
     end
 
     def test_join
-      table = Table.new([[ "planet", "star" ]])
-      row = Row.new(table, [ "Mars", "Sun" ])
+      table = Table.new([%w[planet star]])
+      row = Row.new(table, %w[Mars Sun])
       assert_equal "MarsSun", row.join, "join"
       assert_equal "Mars-Sun", row.join("-"), "join '-'"
     end
 
     def test_to_hash
-      table = Table.new([[ "planet", "star", "" ]])
-      row = Row.new(table, [ "Mars", "Sun", "" ])
-      assert_equal({ :planet => "Mars", :star => "Sun"}, row.to_hash, "to_hash")
+      table = Table.new([["planet", "star", ""]])
+      row = Row.new(table, ["Mars", "Sun", ""])
+      assert_equal({ planet: "Mars", star: "Sun" }, row.to_hash, "to_hash")
     end
 
     def test_inspect
-      table = Table.new([[ "planet", "star" ]])
-      row = Row.new(table, [ "Mars", "Sun" ])
-      assert_match %r{:planet=>"Mars"}, row.inspect, "inspect"
-      assert_match %r{:star=>"Sun"}, row.inspect, "inspect"
+      table = Table.new([%w[planet star]])
+      row = Row.new(table, %w[Mars Sun])
+      assert_match(/:planet=>"Mars"/, row.inspect, "inspect")
+      assert_match(/:star=>"Sun"/, row.inspect, "inspect")
     end
 
     def test_to_s
-      table = Table.new([[ "planet", "star" ]])
-      row = Row.new(table, [ "Mars", "Sun" ])
+      table = Table.new([%w[planet star]])
+      row = Row.new(table, %w[Mars Sun])
       assert_equal "Mars, Sun", row.to_s, "to_s"
     end
 
     def test_render
-      table = Table.new([[ "planet", "star" ]])
+      table = Table.new([%w[planet star]])
       table.renderers[:planet] = StarRenderer
-      row = Row.new(table, [ "Mars", "Sun" ])
+      row = Row.new(table, %w[Mars Sun])
       assert_equal "****", row.render("planet"), "render"
       assert_equal "****", row.render(:planet), "render"
       assert_equal "****", row.render(row.columns.first), "render"
     end
 
     def test_render_with_no_renderer
-      table = Table.new([[ "planet", "star" ]])
-      row = Row.new(table, [ "Mars", "Sun" ])
+      table = Table.new([%w[planet star]])
+      row = Row.new(table, %w[Mars Sun])
       assert_equal "Mars", row.render("planet"), "render"
     end
 
     def test_previous_next
-      table = Table.new([[ "planet", "star" ]])
-      table << [ "Mars", "Sun" ]
-      table << [ "Jupiter", "Sun" ]
+      table = Table.new([%w[planet star]])
+      table << %w[Mars Sun]
+      table << %w[Jupiter Sun]
 
-      assert_equal nil, table.rows.first.previous, "previous of first Row"
+      assert_nil table.rows.first.previous, "previous of first Row"
       assert_equal "Mars", table.rows.last.previous[:planet], "previous"
 
       assert_equal "Jupiter", table.rows.first.next[:planet], "next of first Row"
-      assert_equal nil, table.rows.last.next, "next"
+      assert_nil table.rows.last.next, "next"
     end
 
     def test_each_with_key
-      table = Table.new([[ "planet", "star" ]])
-      table << [ "Mars", "Sun" ]
+      table = Table.new([%w[planet star]])
+      table << %w[Mars Sun]
       results = []
       table.rows.first.each_with_key do |key, value|
-        results << [ key, value ]
+        results << [key, value]
       end
-      assert_equal [ [ :planet, "Mars" ], [ :star, "Sun" ] ], results
+      assert_equal [[:planet, "Mars"], [:star, "Sun"]], results
     end
 
     def test_invalid_date_raises_exception
@@ -133,22 +135,22 @@ module Tabular
     end
 
     def test_to_space_delimited
-      table = Table.new([[ "planet", "star" ]])
+      table = Table.new([%w[planet star]])
       row = Row.new(table, [])
       assert_equal "             ", row.to_space_delimited
 
-      row = Row.new(table, [ "Mars", "Sun" ])
+      row = Row.new(table, %w[Mars Sun])
       assert_equal "Mars     Sun ", row.to_space_delimited
     end
 
     def test_last
-      table = Table.new([[ "planet", "star" ]])
-      table << [ "Mars", "Sun" ]
+      table = Table.new([%w[planet star]])
+      table << %w[Mars Sun]
 
       row = table.rows[0]
       assert row.last?, "last? (and first)"
 
-      table << [ "Earth", "Sun" ]
+      table << %w[Earth Sun]
 
       row = table.rows[0]
       assert !row.last?, "last?"
@@ -158,21 +160,21 @@ module Tabular
     end
 
     def test_delete_blank_rows
-      table = Table.new([[ "planet", "star" ]])
-      table << [ "", "   " ]
-      table << [ "Mars", "Sun" ]
-      table << [ "Jupiter", "Sun" ]
-      table << [ "", nil ]
+      table = Table.new([%w[planet star]])
+      table << ["", "   "]
+      table << %w[Mars Sun]
+      table << %w[Jupiter Sun]
+      table << ["", nil]
 
       table.delete_blank_rows!
 
       assert_equal 2, table.rows.size, "rows"
 
-      assert_equal nil, table.rows[0].previous
+      assert_nil table.rows[0].previous
       assert_equal "Jupiter, Sun", table.rows[0].next.to_s
 
       assert_equal "Mars, Sun", table.rows[1].previous.to_s
-      assert_equal nil, table.rows[1].next
+      assert_nil table.rows[1].next
     end
 
     class StarRenderer

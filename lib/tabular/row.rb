@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "date"
 
 module Tabular
@@ -38,7 +40,7 @@ module Tabular
 
     # Set cell value. Adds cell to end of Row and adds new Column if there is no Column for +key_
     def []=(key, value)
-      if columns.has_key?(key)
+      if columns.key?(key)
         @array[columns.index(key)] = value
       else
         @array << value
@@ -50,6 +52,11 @@ module Tabular
     # Call +block+ for each cell
     def each(&block)
       @array.each(&block)
+    end
+
+    # Call +block+ for each key
+    def each_key(&block)
+      keys.each(&block)
     end
 
     # Call +block+ for each cell
@@ -74,9 +81,7 @@ module Tabular
 
     # Previous Row
     def previous
-      if index > 0
-        @table.rows[index - 1]
-      end
+      @table.rows[index - 1] if index.positive?
     end
 
     # Next Row
@@ -113,13 +118,13 @@ module Tabular
     end
 
     def to_space_delimited
-      _cells = []
+      cells = []
 
-      hash.each do |key, _|
-        _cells << (render(key) || "").ljust(columns[key].width)
+      hash.each_key do |key|
+        cells << (render(key) || "").ljust(columns[key].width)
       end
 
-      _cells.join "   "
+      cells.join "   "
     end
 
     def inspect
@@ -130,7 +135,6 @@ module Tabular
       @array.join(", ").to_s
     end
 
-
     protected
 
     def hash #:nodoc:
@@ -138,13 +142,11 @@ module Tabular
     end
 
     def build_hash #:nodoc:
-      _hash = Hash.new
+      hash = {}
       columns.each do |column|
-        if column.key
-          _hash[column.key] = value_for_hash(column)
-        end
+        hash[column.key] = value_for_hash(column) if column.key
       end
-      _hash
+      hash
     end
 
     def value_for_hash(column) #:nodoc:
@@ -155,14 +157,13 @@ module Tabular
 
       case column.column_type
       when :boolean
-        [ 1, "1", true, "true" ].include?(value)
+        [1, "1", true, "true"].include?(value)
       when :date
         date?(value) ? value : value.to_s
       else
         value
       end
     end
-
 
     private
 
@@ -177,11 +178,7 @@ module Tabular
         Date.parse(value.to_s, true)
       rescue ArgumentError
         date = parse_invalid_date(value)
-        if date
-          date
-        else
-          raise ArgumentError, "'#{key}' index #{index} #{value}' is not a valid date"
-        end
+        date || raise(ArgumentError, "'#{key}' index #{index} #{value}' is not a valid date")
       end
     end
 

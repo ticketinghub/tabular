@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Tabular
   # Simple Enumerable list of Hashes. Use Table.read(file_path) to read file. Can also create a Table with Table.new. Either
   # pass in data or set options and then call row=.
@@ -7,9 +9,8 @@ module Tabular
     include Tabular::Tables::FileReading
     include Tabular::Zero
 
-    attr_accessor :column_mapper
     attr_accessor :row_mapper
-    attr_reader   :rows
+    attr_reader :column_mapper
 
     def self.read(file, options = {})
       table = Table.new
@@ -20,6 +21,7 @@ module Tabular
     # Pass data in as +rows+. Expects rows to be an Enumerable of Enumerables.
     # Maps rows to Hash-like Tabular::Rows.
     def initialize(rows = [])
+      @columns = nil
       self.rows = rows
     end
 
@@ -29,13 +31,11 @@ module Tabular
 
     # Set table rows. Calls row <<, which creates columns and links the source rows to Row#source.
     def rows=(source_rows = [])
-      return [] unless source_rows
+      return unless source_rows
 
       source_rows.each do |row|
         self.<< row
       end
-
-      rows
     end
 
     # Return Row at zero-based index, or nil if Row is out of bounds
@@ -47,25 +47,23 @@ module Tabular
     # To control how source data is added to the Table, use Table#mapper= to set a class that
     # implements map(row) and returns a Hash.
     def <<(row)
-      if row_mapper
-        cells = row_mapper.map(row)
-      else
-        cells = row
-      end
+      cells = if row_mapper
+                row_mapper.map(row)
+              else
+                row
+              end
 
-      if @columns.nil? || @columns.size == 0
+      if @columns.nil? || @columns.empty?
         @columns = Tabular::Columns.new(self, cells, column_mapper)
-        if !cells.respond_to?(:keys)
-          return columns
-        end
+        return columns unless cells.respond_to?(:keys)
       end
 
-      _row = Tabular::Row.new(self, cells, row)
-      _row.keys.each do |key|
+      new_row = Tabular::Row.new(self, cells, row)
+      new_row.each_key do |key|
         columns << key
       end
-      rows << _row
-      _row
+      rows << new_row
+      new_row
     end
 
     def inspect
@@ -78,27 +76,25 @@ module Tabular
     end
 
     # Remove all columns that only contain a blank string, zero, or nil
-    def delete_blank_columns!(*_options)
-      exceptions = extract_exceptions(_options)
+    def delete_blank_columns!(*options)
+      exceptions = extract_exceptions(options)
 
       (columns.map(&:key) - exceptions).each do |key|
-        if rows.all? { |row| is_blank?(row[key]) || is_zero?(row[key]) }
+        if rows.all? { |row| is_blank?(row[key]) || is_zero?(row[key]) } # rubocop:disable Style/IfUnlessModifier
           delete_column key
         end
       end
     end
 
     # Remove all columns that contain the same value in all rows
-    def delete_homogenous_columns!(*_options)
+    def delete_homogenous_columns!(*options)
       return if rows.size < 2
 
-      exceptions = extract_exceptions(_options)
+      exceptions = extract_exceptions(options)
 
       (columns.map(&:key) - exceptions).each do |key|
         value = rows.first[key]
-        if rows.all? { |row| row[key] == value }
-          delete_column key
-        end
+        delete_column key if rows.all? { |row| row[key] == value }
       end
     end
 
@@ -142,9 +138,7 @@ module Tabular
     end
 
     def column_mapper=(mapper)
-      if rows.nil? || rows.size == 0
-        @columns = nil
-      end
+      @columns = nil if rows.nil? || rows.empty?
       @column_mapper = mapper
     end
 
@@ -154,13 +148,12 @@ module Tabular
     end
 
     def to_space_delimited
-      ([ columns ] + rows).map(&:to_space_delimited).join("\n") << "\n"
+      ([columns] + rows).map(&:to_space_delimited).join("\n") << "\n"
     end
 
     def to_s
       "#<#{self.class} #{rows.size}>"
     end
-
 
     private
 

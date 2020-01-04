@@ -1,10 +1,10 @@
+# frozen_string_literal: true
+
 module Tabular
   module Zero
-    def is_zero?(object)
-      if object.respond_to?(:zero?)
-        return object.zero?
-      end
-  
+    def is_zero?(object) # rubocop:disable Naming/PredicateName
+      return object.zero? if object.respond_to?(:zero?)
+
       case object
       when NilClass, FalseClass, TrueClass
         false
